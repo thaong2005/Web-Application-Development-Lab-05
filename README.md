@@ -7,7 +7,7 @@ Work Flow Explain:
 
 # 1. Add
 
-(1) User enters list page: student.java
+(1) User enters list page: student-list.jsp
 
 → student?action=list
 
