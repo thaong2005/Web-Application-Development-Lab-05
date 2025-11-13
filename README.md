@@ -99,7 +99,7 @@ student?action=list&message=Student deleted successfully
 (5) View displays the new list
 
 
-========================================================
+=================================================================================
 ## Excersise 5 : SEARCH FUNCTION 
 
 Main steps:
@@ -136,10 +136,96 @@ if (keyword != null && !keyword.trim().isEmpty()){
 student-list:
 
 ```jsp
-<input type="text" name="keyword" value="<c:out value='${keyword}'/>" />
+ <!-- Search Form -->
+        <div style="margin-bottom: 20px; display:flex; gap:10px; align-items:center;">
+            <form action="student" method="get" style="display:flex; gap:8px; align-items:center;">
+                <input type="hidden" name="action" value="list" />
+          <input type="text" name="keyword" placeholder="Search by code, name or email" 
+              value="<c:out value='${keyword}'/>" 
+              style="padding:10px; border-radius:6px; border:1px solid #ccc; width:320px;" />
+                <button type="submit" class="btn btn-primary">🔎 Search</button>
+                <a href="student?action=list" class="btn btn-secondary">Clear</a>
+            </form>
+        </div>
 ```
 
 # Output: 
 ![Search results: ](./output/EX5/search1.png)
 ![Search results: ](./output/EX5/search2.png)
-    
+
+
+=================================================================================
+## EXERCISE 6: SERVER-SIDE VALIDATION 
+
+(1) Controller (`StudentController.java`):<br>
+- Add method `private boolean validateStudent(Student student, HttpServletRequest request)`.
+
+- Check `studentCode`: required, normalize to UPPERCASE, must be correct pattern (2 letters + 3+ digits) — errors saved to `request.setAttribute("errorCode", "...")`.
+
+- Check `fullName`: required, length >= 2 — errors saved to `errorName`.
+
+- Check `email`: if entered, must be correct simple format (regex) — errors saved to `errorEmail`.
+
+- Check `major`: required — errors saved to `errorMajor`.
+
+- Call `validateStudent(...)` in `insertStudent(...)` and `updateStudent(...)` before calling DAO.
+
+- If validation fails: reset `student` (to keep data), forward to form (`/views/student-form.jsp`) and stop (return).
+
+- If valid: continue insert/update and redirect to list with success message.
+
+(2) View (`student-form.jsp`):<br>
+- Add error display next to each field 
+(use `<c:if test="${not empty errorCode}">` ... );
+style `.error { color:red; ... }`.<br>
+- When form is forwarded due to error, fields will still keep entered values ​​(use `${student != null ? student.field : ''}`).
+
+Controller - validateStudent():
+
+```java
+private boolean validateStudent(Student student, HttpServletRequest request) {
+    boolean isValid = true;
+
+    String code = student.getStudentCode();
+    if (code != null) code = code.trim();
+    if (code == null || code.isEmpty()) {
+        request.setAttribute("errorCode", "Student code is required");
+        isValid = false;
+    } else {
+        String normalized = code.toUpperCase();
+        student.setStudentCode(normalized);
+        if (!normalized.matches("[A-Z]{2}\\d{3,}")) {
+            request.setAttribute("errorCode", "Invalid format. Use 2 letters + 3+ digits (e.g., SV001)");
+            isValid = false;
+        }
+    }
+
+    // fullName, email, major checks (đặt errorName, errorEmail, errorMajor)
+    return isValid;
+}
+```
+
+Controller - use validate in insert:
+
+```java
+Student newStudent = new Student(studentCode, fullName, email, major);
+if (!validateStudent(newStudent, request)) {
+    request.setAttribute("student", newStudent);
+    RequestDispatcher dispatcher = request.getRequestDispatcher("/views/student-form.jsp");
+    dispatcher.forward(request, response);
+    return;
+}
+// if validated -> call DAO and redirect
+```
+
+JSP - show error:
+
+```jsp
+<input type="text" id="studentCode" name="studentCode" value="${student != null ? student.studentCode : ''}" />
+<c:if test="${not empty errorCode}">
+    <span class="error"><c:out value="${errorCode}"/></span>
+</c:if>
+```
+
+# Output: ![Validate results: ](./output/EX6/validate.png)
+

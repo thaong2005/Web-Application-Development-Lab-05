@@ -122,6 +122,12 @@
             color: #666;
             margin-top: 5px;
         }
+        .error {
+            color: red;
+            font-size: 14px;
+            display: block;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -155,10 +161,13 @@
                 <input type="text" 
                        id="studentCode" 
                        name="studentCode" 
-                       value="${student.studentCode}"
+                       value="${student != null ? student.studentCode : ''}"
                        ${student != null ? 'readonly' : 'required'}
                        placeholder="e.g., SV001, IT123">
                 <p class="info-text">Format: 2 letters + 3+ digits</p>
+                    <c:if test="${not empty errorCode}">
+                        <span class="error"><c:out value="${errorCode}"/></span>
+                    </c:if>
             </div>
             
             <!-- Full Name -->
@@ -169,9 +178,12 @@
                 <input type="text" 
                        id="fullName" 
                        name="fullName" 
-                       value="${student.fullName}"
+                       value="${student != null ? student.fullName : ''}"
                        required
                        placeholder="Enter full name">
+                <c:if test="${not empty errorName}">
+                    <span class="error"><c:out value="${errorName}"/></span>
+                </c:if>
             </div>
             
             <!-- Email -->
@@ -182,9 +194,12 @@
                 <input type="email" 
                        id="email" 
                        name="email" 
-                       value="${student.email}"
+                       value="${student != null ? student.email : ''}"
                        required
                        placeholder="student@example.com">
+                <c:if test="${not empty errorEmail}">
+                    <span class="error"><c:out value="${errorEmail}"/></span>
+                </c:if>
             </div>
             
             <!-- Major -->
@@ -195,22 +210,25 @@
                 <select id="major" name="major" required>
                     <option value="">-- Select Major --</option>
                     <option value="Computer Science" 
-                            ${student.major == 'Computer Science' ? 'selected' : ''}>
+                            ${student != null && student.major == 'Computer Science' ? 'selected' : ''}>
                         Computer Science
                     </option>
                     <option value="Information Technology" 
-                            ${student.major == 'Information Technology' ? 'selected' : ''}>
+                            ${student != null && student.major == 'Information Technology' ? 'selected' : ''}>
                         Information Technology
                     </option>
                     <option value="Software Engineering" 
-                            ${student.major == 'Software Engineering' ? 'selected' : ''}>
+                            ${student != null && student.major == 'Software Engineering' ? 'selected' : ''}>
                         Software Engineering
                     </option>
                     <option value="Business Administration" 
-                            ${student.major == 'Business Administration' ? 'selected' : ''}>
+                            ${student != null && student.major == 'Business Administration' ? 'selected' : ''}>
                         Business Administration
                     </option>
                 </select>
+                <c:if test="${not empty errorMajor}">
+                    <span class="error"><c:out value="${errorMajor}"/></span>
+                </c:if>
             </div>
             
             <!-- Buttons -->
