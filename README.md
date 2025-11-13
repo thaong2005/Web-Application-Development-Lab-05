@@ -99,7 +99,7 @@ student?action=list&message=Student deleted successfully
 (5) View displays the new list
 
 
-=================================================================================
+===========================================================================
 ## Excersise 5 : SEARCH FUNCTION 
 
 Main steps:
@@ -155,7 +155,7 @@ student-list:
 <<<<<<< HEAD
 
 
-=================================================================================
+===========================================================================
 ## EXERCISE 6: SERVER-SIDE VALIDATION 
 
 (1) Controller (`StudentController.java`):<br>
@@ -230,7 +230,7 @@ JSP - show error:
 
 # Output: ![Validate results: ](./output/EX6/validate.png)
 
-=================================================================================
+===========================================================================
 ## EXERCISE 7: SORTING & FILTERING
 <<<<<<< HEAD
 
@@ -335,7 +335,7 @@ private void sortStudents(HttpServletRequest req, HttpServletResponse resp) {
 ```
 # Output: ![Sort results: ](./output/EX7/sort.png)
 
-=================================================================================
+===========================================================================
 ## EXERCISE 8: PAGINATION (ngắn gọn)
 
 - DAO (`StudentDAO.java`): add count/paginate methods for scenarios (all, by keyword, by major, keyword+major combination).
