@@ -337,5 +337,4 @@ private void sortStudents(HttpServletRequest req, HttpServletResponse resp) {
 
 =================================================================================
 ## EXERCISE 8: PAGINATION 
-=======
->>>>>>> b7a980d35011e06bc9a1ab001a84ab5ff15981c1
+
