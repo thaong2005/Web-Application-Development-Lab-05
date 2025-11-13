@@ -232,6 +232,7 @@ JSP - show error:
 
 =================================================================================
 ## EXERCISE 7: SORTING & FILTERING
+<<<<<<< HEAD
 
 (1) DAO (`StudentDAO.java`):
 - Add `validateSortBy(String sortBy)` and `validateOrder(String order)` to only accept valid columns and orders (avoid injection when concatenating with ORDER BY).
@@ -336,3 +337,5 @@ private void sortStudents(HttpServletRequest req, HttpServletResponse resp) {
 
 =================================================================================
 ## EXERCISE 8: PAGINATION 
+=======
+>>>>>>> b7a980d35011e06bc9a1ab001a84ab5ff15981c1
