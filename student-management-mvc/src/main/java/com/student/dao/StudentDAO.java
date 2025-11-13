@@ -26,10 +26,19 @@ public class StudentDAO {
         }
     }
     
+    // Column name constants
+    private static final String COL_ID = "id";
+    private static final String COL_STUDENT_CODE = "student_code";
+    private static final String COL_FULL_NAME = "full_name";
+    private static final String COL_EMAIL = "email";
+    private static final String COL_MAJOR = "major";
+    private static final String COL_CREATED_AT = "created_at";
+
     // Get all students
     public List<Student> getAllStudents() {
         List<Student> students = new ArrayList<>();
-        String sql = "SELECT * FROM students ORDER BY id DESC";
+        String sql = "SELECT " + COL_ID + ", " + COL_STUDENT_CODE + ", " + COL_FULL_NAME + ", "
+                + COL_EMAIL + ", " + COL_MAJOR + ", " + COL_CREATED_AT + " FROM students ORDER BY " + COL_ID + " DESC";
         
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
@@ -37,12 +46,12 @@ public class StudentDAO {
             
             while (rs.next()) {
                 Student student = new Student();
-                student.setId(rs.getInt("id"));
-                student.setStudentCode(rs.getString("student_code"));
-                student.setFullName(rs.getString("full_name"));
-                student.setEmail(rs.getString("email"));
-                student.setMajor(rs.getString("major"));
-                student.setCreatedAt(rs.getTimestamp("created_at"));
+                student.setId(rs.getInt(COL_ID));
+                student.setStudentCode(rs.getString(COL_STUDENT_CODE));
+                student.setFullName(rs.getString(COL_FULL_NAME));
+                student.setEmail(rs.getString(COL_EMAIL));
+                student.setMajor(rs.getString(COL_MAJOR));
+                student.setCreatedAt(rs.getTimestamp(COL_CREATED_AT));
                 students.add(student);
             }
             
@@ -53,25 +62,66 @@ public class StudentDAO {
         return students;
     }
     
+    // Search students by keyword (student_code, full_name, email)
+    public List<Student> searchStudents(String keyword) {
+        // If keyword is null or empty, return all students
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return getAllStudents();
+        }
+
+        List<Student> students = new ArrayList<>();
+        String sql = "SELECT " + COL_ID + ", " + COL_STUDENT_CODE + ", " + COL_FULL_NAME + ", "
+                + COL_EMAIL + ", " + COL_MAJOR + ", " + COL_CREATED_AT + " FROM students WHERE "
+                + COL_STUDENT_CODE + " LIKE ? OR " + COL_FULL_NAME + " LIKE ? OR " + COL_EMAIL + " LIKE ? ORDER BY " + COL_ID + " DESC";
+        String searchPattern = "%" + keyword + "%";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, searchPattern);
+            pstmt.setString(2, searchPattern);
+            pstmt.setString(3, searchPattern);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Student student = new Student();
+                    student.setId(rs.getInt(COL_ID));
+                    student.setStudentCode(rs.getString(COL_STUDENT_CODE));
+                    student.setFullName(rs.getString(COL_FULL_NAME));
+                    student.setEmail(rs.getString(COL_EMAIL));
+                    student.setMajor(rs.getString(COL_MAJOR));
+                    student.setCreatedAt(rs.getTimestamp(COL_CREATED_AT));
+                    students.add(student);
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return students;
+    }
+    
     // Get student by ID
     public Student getStudentById(int id) {
-        String sql = "SELECT * FROM students WHERE id = ?";
+        String sql = "SELECT " + COL_ID + ", " + COL_STUDENT_CODE + ", " + COL_FULL_NAME + ", "
+                + COL_EMAIL + ", " + COL_MAJOR + ", " + COL_CREATED_AT + " FROM students WHERE " + COL_ID + " = ?";
         
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setInt(1, id);
-            ResultSet rs = pstmt.executeQuery();
-            
-            if (rs.next()) {
-                Student student = new Student();
-                student.setId(rs.getInt("id"));
-                student.setStudentCode(rs.getString("student_code"));
-                student.setFullName(rs.getString("full_name"));
-                student.setEmail(rs.getString("email"));
-                student.setMajor(rs.getString("major"));
-                student.setCreatedAt(rs.getTimestamp("created_at"));
-                return student;
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    Student student = new Student();
+                    student.setId(rs.getInt(COL_ID));
+                    student.setStudentCode(rs.getString(COL_STUDENT_CODE));
+                    student.setFullName(rs.getString(COL_FULL_NAME));
+                    student.setEmail(rs.getString(COL_EMAIL));
+                    student.setMajor(rs.getString(COL_MAJOR));
+                    student.setCreatedAt(rs.getTimestamp(COL_CREATED_AT));
+                    return student;
+                }
             }
             
         } catch (SQLException e) {

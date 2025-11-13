@@ -72,10 +72,20 @@ public class StudentController extends HttpServlet {
     // List all students
     private void listStudents(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        
-        List<Student> students = studentDAO.getAllStudents();
+        // Check for optional search keyword
+        String keyword = request.getParameter("keyword");
+        List<Student> students;
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            students = studentDAO.searchStudents(keyword.trim());
+            // keep keyword so JSP can show it in the search box
+            request.setAttribute("keyword", keyword.trim());
+        } else {
+            students = studentDAO.getAllStudents();
+        }
+
         request.setAttribute("students", students);
-        
+
         RequestDispatcher dispatcher = request.getRequestDispatcher("/views/student-list.jsp");
         dispatcher.forward(request, response);
     }

@@ -99,4 +99,47 @@ student?action=list&message=Student deleted successfully
 (5) View displays the new list
 
 
+========================================================
+## Excersise 5 : SEARCH FUNCTION 
 
+Main steps:
+1. DAO: add `searchStudents(String keyword)` using `PreparedStatement` with 3 placeholders and `searchPattern = "%" + keyword + "%"`. <br>
+2. Controller: in `listStudents()` read `request.getParameter("keyword")`; if there is a keyword, call `studentDAO.searchStudents(keyword)` and assign `request.setAttribute("keyword", keyword)`; otherwise call `getAllStudents()`. <br>
+3. View (JSP): add GET form with `input name="keyword"` and escape the value with `<c:out>` to avoid XSS.
+
+DAO:
+
+```java
+// StudentDAO.java
+public List<Student> searchStudents(String keyword) {
+    if (keyword == null || keyword.trim().isEmpty()) return getAllStudents();
+    String sql = "SELECT id, student_code, full_name, email, major, created_at FROM students"
+               + " WHERE student_code LIKE ? OR full_name LIKE ? OR email LIKE ? ORDER BY id DESC";
+    String p = "%" + keyword + "%";
+    // prepare, set p for placeholders, execute, map ResultSet -> List<Student>
+}
+```
+
+Controller:
+
+```java
+// StudentController.java (trích đoạn)
+String keyword = request.getParameter("keyword");
+if (keyword != null && !keyword.trim().isEmpty()){
+    students = studentDAO.searchStudents(keyword.trim());
+    request.setAttribute("keyword", keyword.trim());
+} else {
+    students = studentDAO.getAllStudents();
+}
+```
+
+student-list:
+
+```jsp
+<input type="text" name="keyword" value="<c:out value='${keyword}'/>" />
+```
+
+# Output: 
+![Search results: ](./output/EX5/search1.png)
+![Search results: ](./output/EX5/search2.png)
+    

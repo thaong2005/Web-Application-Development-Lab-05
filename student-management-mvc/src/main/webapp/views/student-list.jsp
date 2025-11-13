@@ -174,6 +174,25 @@
             </a>
         </div>
         
+        <!-- Search Form -->
+        <div style="margin-bottom: 20px; display:flex; gap:10px; align-items:center;">
+            <form action="student" method="get" style="display:flex; gap:8px; align-items:center;">
+                <input type="hidden" name="action" value="list" />
+          <input type="text" name="keyword" placeholder="Search by code, name or email" 
+              value="<c:out value='${keyword}'/>" 
+              style="padding:10px; border-radius:6px; border:1px solid #ccc; width:320px;" />
+                <button type="submit" class="btn btn-primary">🔎 Search</button>
+                <a href="student?action=list" class="btn btn-secondary">Clear</a>
+            </form>
+        </div>
+        
+        <!-- Search result message -->
+        <c:if test="${not empty keyword}">
+            <div style="margin-bottom:12px; font-weight:600; color:#333;">
+                Kết quả tìm kiếm cho "<c:out value="${keyword}"/>"
+            </div>
+        </c:if>
+        
         <!-- Student Table -->
         <c:choose>
             <c:when test="${not empty students}">
