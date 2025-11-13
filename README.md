@@ -152,4 +152,187 @@ student-list:
 # Output: 
 ![Search results: ](./output/EX5/search1.png)
 ![Search results: ](./output/EX5/search2.png)
-    
+<<<<<<< HEAD
+
+
+=================================================================================
+## EXERCISE 6: SERVER-SIDE VALIDATION 
+
+(1) Controller (`StudentController.java`):<br>
+- Add method `private boolean validateStudent(Student student, HttpServletRequest request)`.
+
+- Check `studentCode`: required, normalize to UPPERCASE, must be correct pattern (2 letters + 3+ digits) — errors saved to `request.setAttribute("errorCode", "...")`.
+
+- Check `fullName`: required, length >= 2 — errors saved to `errorName`.
+
+- Check `email`: if entered, must be correct simple format (regex) — errors saved to `errorEmail`.
+
+- Check `major`: required — errors saved to `errorMajor`.
+
+- Call `validateStudent(...)` in `insertStudent(...)` and `updateStudent(...)` before calling DAO.
+
+- If validation fails: reset `student` (to keep data), forward to form (`/views/student-form.jsp`) and stop (return).
+
+- If valid: continue insert/update and redirect to list with success message.
+
+(2) View (`student-form.jsp`):<br>
+- Add error display next to each field 
+(use `<c:if test="${not empty errorCode}">` ... );
+style `.error { color:red; ... }`.<br>
+- When form is forwarded due to error, fields will still keep entered values ​​(use `${student != null ? student.field : ''}`).
+
+Controller - validateStudent():
+
+```java
+private boolean validateStudent(Student student, HttpServletRequest request) {
+    boolean isValid = true;
+
+    String code = student.getStudentCode();
+    if (code != null) code = code.trim();
+    if (code == null || code.isEmpty()) {
+        request.setAttribute("errorCode", "Student code is required");
+        isValid = false;
+    } else {
+        String normalized = code.toUpperCase();
+        student.setStudentCode(normalized);
+        if (!normalized.matches("[A-Z]{2}\\d{3,}")) {
+            request.setAttribute("errorCode", "Invalid format. Use 2 letters + 3+ digits (e.g., SV001)");
+            isValid = false;
+        }
+    }
+
+    // fullName, email, major checks (đặt errorName, errorEmail, errorMajor)
+    return isValid;
+}
+```
+
+Controller - use validate in insert:
+
+```java
+Student newStudent = new Student(studentCode, fullName, email, major);
+if (!validateStudent(newStudent, request)) {
+    request.setAttribute("student", newStudent);
+    RequestDispatcher dispatcher = request.getRequestDispatcher("/views/student-form.jsp");
+    dispatcher.forward(request, response);
+    return;
+}
+// if validated -> call DAO and redirect
+```
+
+JSP - show error:
+
+```jsp
+<input type="text" id="studentCode" name="studentCode" value="${student != null ? student.studentCode : ''}" />
+<c:if test="${not empty errorCode}">
+    <span class="error"><c:out value="${errorCode}"/></span>
+</c:if>
+```
+
+# Output: ![Validate results: ](./output/EX6/validate.png)
+
+=================================================================================
+## EXERCISE 7: SORTING & FILTERING
+
+(1) DAO (`StudentDAO.java`):
+- Add `validateSortBy(String sortBy)` and `validateOrder(String order)` to only accept valid columns and orders (avoid injection when concatenating with ORDER BY).
+
+- Add `getStudentsSorted(String sortBy, String order)` — returns a list sorted by validated columns and orders.
+
+- Add `getStudentsByMajor(String major)` — uses `PreparedStatement` with `WHERE major = ? ORDER BY id DESC`.
+
+- Add `getStudentsFiltered(String major, String sortBy, String order)` — combines filtering by major and sorting by column/order.
+
+```java
+// validate sortBy and order
+private String validateSortBy(String sortBy) { /* only id, student_code, full_name, email, major */ }
+private String validateOrder(String order) { return "ASC" or "DESC"; }
+
+public List<Student> getStudentsSorted(String sortBy, String order) {
+        String col = validateSortBy(sortBy);
+        String ord = validateOrder(order);
+        String sql = "SELECT id, student_code, full_name, email, major, created_at FROM students ORDER BY " + col + " " + ord;
+        // execute and map ResultSet
+}
+
+public List<Student> getStudentsByMajor(String major) {
+        String sql = "SELECT id, student_code, full_name, email, major, created_at FROM students WHERE major = ? ORDER BY id DESC";
+        // prepare, set major, execute, map
+}
+
+// combined (optional)
+public List<Student> getStudentsFiltered(String major, String sortBy, String order) { /* filter+sort */ }
+```
+
+(2) Controller (`StudentController.java`):
+- Add new cases in `doGet`: `action=sort` and `action=filter`.
+
+- `sortStudents(...)`: read `sortBy` and `order`; if `major` is included, call `getStudentsFiltered(...)` to both filter and sort; set attributes `students`, `sortBy`, `order`, `selectedMajor` (if any) and forward to list view.
+
+- `filterStudents(...)`: get `major` (and `sortBy`/`order` if any), call corresponding DAO, and forward with attribute `selectedMajor` so JSP can keep state.
+
+
+```java
+// in doGet switch: case "sort": sortStudents(...); case "filter": filterStudents(...);
+
+private void sortStudents(HttpServletRequest req, HttpServletResponse resp) {
+        String sortBy = req.getParameter("sortBy");
+        String order = req.getParameter("order");
+        String major = req.getParameter("major");
+        List<Student> students = (major != null && !major.isEmpty())
+                ? studentDAO.getStudentsFiltered(major, sortBy, order)
+                : studentDAO.getStudentsSorted(sortBy, order);
+        req.setAttribute("students", students);
+        req.setAttribute("sortBy", sortBy);
+        req.setAttribute("order", order);
+        req.setAttribute("selectedMajor", major);
+        req.getRequestDispatcher("/views/student-list.jsp").forward(req, resp);
+}
+```
+(3) View (`student-list.jsp`):
+- Add dropdown filter `major` (form `action=filter`) above the table. When filter is applied, dropdown keeps `selectedMajor` selection.
+
+- Turn column headers into `action=sort&sortBy=...&order=...` links to sort by column. If click again on the same column, reverse order (asc ↔ desc).
+
+- Show current sort indicator (▲ for asc, ▼ for desc).
+
+- When filtering, sort links will add param `major` (only if `selectedMajor` is not empty) to keep filter when changing sort. Filter form also sends hidden `sortBy`/`order` to keep sort when filter is applied.
+
+- Use `<c:if>` in `<option>` to mark `selected`.
+
+```jsp
+<option value="Computer Science" <c:if test="${selectedMajor == 'Computer Science'}">selected</c:if>>Computer Science</option>
+```
+
+- Dùng `<c:set>` + `<c:choose>` để tính `nextOrder` (nếu đang `asc` → `desc`, ngược lại `asc`) cho mỗi cột, đảm bảo click lại đảo chiều.
+
+- Dùng `<c:url>` + `<c:param>` để dựng link sort an toàn (escaping tự động) và thêm `major` chỉ khi cần:
+
+```jsp
+<c:set var="nextOrderName">
+    <c:choose>
+        <c:when test="${sortBy == 'full_name' && order == 'asc'}">desc</c:when>
+        <c:otherwise>asc</c:otherwise>
+    </c:choose>
+</c:set>
+
+<c:url var="sortNameUrl" value="student">
+    <c:param name="action" value="sort" />
+    <c:param name="sortBy" value="full_name" />
+    <c:param name="order" value="${nextOrderName}" />
+    <c:if test="${not empty selectedMajor}">
+        <c:param name="major" value="${selectedMajor}" />
+    </c:if>
+</c:url>
+
+<a href="${sortNameUrl}">Name</a>
+<c:if test="${sortBy == 'full_name'}">
+    <c:choose>
+        <c:when test="${order == 'asc'}"> ▲</c:when>
+        <c:otherwise> ▼</c:otherwise>
+    </c:choose>
+</c:if>
+```
+# Output: ![Sort results: ](./output/EX7/sort.png)
+
+=================================================================================
+## EXERCISE 8: PAGINATION 

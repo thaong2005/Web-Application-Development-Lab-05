@@ -192,6 +192,27 @@
                 Kết quả tìm kiếm cho "<c:out value="${keyword}"/>"
             </div>
         </c:if>
+
+        <!-- Filter by Major -->
+        <div class="filter-box" style="margin-bottom:16px;">
+            <form action="student" method="get" style="display:flex; gap:8px; align-items:center;">
+                <input type="hidden" name="action" value="filter" />
+                <input type="hidden" name="sortBy" value="${sortBy}" />
+                <input type="hidden" name="order" value="${order}" />
+                <label for="major">Filter by Major:</label>
+                <select id="major" name="major" style="padding:8px; border-radius:6px;">
+                    <option value="">All Majors</option>
+                    <option value="Computer Science" <c:if test="${selectedMajor == 'Computer Science'}">selected</c:if>>Computer Science</option>
+                    <option value="Information Technology" <c:if test="${selectedMajor == 'Information Technology'}">selected</c:if>>Information Technology</option>
+                    <option value="Software Engineering" <c:if test="${selectedMajor == 'Software Engineering'}">selected</c:if>>Software Engineering</option>
+                    <option value="Business Administration" <c:if test="${selectedMajor == 'Business Administration'}">selected</c:if>>Business Administration</option>
+                </select>
+                <button type="submit" class="btn btn-primary">Apply Filter</button>
+                <c:if test="${not empty selectedMajor}">
+                    <a href="student?action=list" class="btn btn-secondary">Clear Filter</a>
+                </c:if>
+            </form>
+        </div>
         
         <!-- Student Table -->
         <c:choose>
@@ -199,11 +220,131 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Student Code</th>
-                            <th>Full Name</th>
-                            <th>Email</th>
-                            <th>Major</th>
+                            <!-- ID -->
+                            <th>
+                                <c:set var="nextOrderId">
+                                    <c:choose>
+                                        <c:when test="${sortBy == 'id' && order == 'asc'}">desc</c:when>
+                                        <c:otherwise>asc</c:otherwise>
+                                    </c:choose>
+                                </c:set>
+                                <c:url var="sortIdUrl" value="student">
+                                    <c:param name="action" value="sort" />
+                                    <c:param name="sortBy" value="id" />
+                                    <c:param name="order" value="${nextOrderId}" />
+                                    <c:if test="${not empty selectedMajor}">
+                                        <c:param name="major" value="${selectedMajor}" />
+                                    </c:if>
+                                </c:url>
+                                <a href="${sortIdUrl}">ID</a>
+                                <c:if test="${sortBy == 'id'}">
+                                    <c:choose>
+                                        <c:when test="${order == 'asc'}"> ▲</c:when>
+                                        <c:otherwise> ▼</c:otherwise>
+                                    </c:choose>
+                                </c:if>
+                            </th>
+
+                            <!-- Code -->
+                            <th>
+                                <c:set var="nextOrderCode">
+                                    <c:choose>
+                                        <c:when test="${sortBy == 'student_code' && order == 'asc'}">desc</c:when>
+                                        <c:otherwise>asc</c:otherwise>
+                                    </c:choose>
+                                </c:set>
+                                <c:url var="sortCodeUrl" value="student">
+                                    <c:param name="action" value="sort" />
+                                    <c:param name="sortBy" value="student_code" />
+                                    <c:param name="order" value="${nextOrderCode}" />
+                                    <c:if test="${not empty selectedMajor}">
+                                        <c:param name="major" value="${selectedMajor}" />
+                                    </c:if>
+                                </c:url>
+                                <a href="${sortCodeUrl}">Code</a>
+                                <c:if test="${sortBy == 'student_code'}">
+                                    <c:choose>
+                                        <c:when test="${order == 'asc'}"> ▲</c:when>
+                                        <c:otherwise> ▼</c:otherwise>
+                                    </c:choose>
+                                </c:if>
+                            </th>
+
+                            <!-- Name -->
+                            <th>
+                                <c:set var="nextOrderName">
+                                    <c:choose>
+                                        <c:when test="${sortBy == 'full_name' && order == 'asc'}">desc</c:when>
+                                        <c:otherwise>asc</c:otherwise>
+                                    </c:choose>
+                                </c:set>
+                                <c:url var="sortNameUrl" value="student">
+                                    <c:param name="action" value="sort" />
+                                    <c:param name="sortBy" value="full_name" />
+                                    <c:param name="order" value="${nextOrderName}" />
+                                    <c:if test="${not empty selectedMajor}">
+                                        <c:param name="major" value="${selectedMajor}" />
+                                    </c:if>
+                                </c:url>
+                                <a href="${sortNameUrl}">Name</a>
+                                <c:if test="${sortBy == 'full_name'}">
+                                    <c:choose>
+                                        <c:when test="${order == 'asc'}"> ▲</c:when>
+                                        <c:otherwise> ▼</c:otherwise>
+                                    </c:choose>
+                                </c:if>
+                            </th>
+
+                            <!-- Email -->
+                            <th>
+                                <c:set var="nextOrderEmail">
+                                    <c:choose>
+                                        <c:when test="${sortBy == 'email' && order == 'asc'}">desc</c:when>
+                                        <c:otherwise>asc</c:otherwise>
+                                    </c:choose>
+                                </c:set>
+                                <c:url var="sortEmailUrl" value="student">
+                                    <c:param name="action" value="sort" />
+                                    <c:param name="sortBy" value="email" />
+                                    <c:param name="order" value="${nextOrderEmail}" />
+                                    <c:if test="${not empty selectedMajor}">
+                                        <c:param name="major" value="${selectedMajor}" />
+                                    </c:if>
+                                </c:url>
+                                <a href="${sortEmailUrl}">Email</a>
+                                <c:if test="${sortBy == 'email'}">
+                                    <c:choose>
+                                        <c:when test="${order == 'asc'}"> ▲</c:when>
+                                        <c:otherwise> ▼</c:otherwise>
+                                    </c:choose>
+                                </c:if>
+                            </th>
+
+                            <!-- Major -->
+                            <th>
+                                <c:set var="nextOrderMajor">
+                                    <c:choose>
+                                        <c:when test="${sortBy == 'major' && order == 'asc'}">desc</c:when>
+                                        <c:otherwise>asc</c:otherwise>
+                                    </c:choose>
+                                </c:set>
+                                <c:url var="sortMajorUrl" value="student">
+                                    <c:param name="action" value="sort" />
+                                    <c:param name="sortBy" value="major" />
+                                    <c:param name="order" value="${nextOrderMajor}" />
+                                    <c:if test="${not empty selectedMajor}">
+                                        <c:param name="major" value="${selectedMajor}" />
+                                    </c:if>
+                                </c:url>
+                                <a href="${sortMajorUrl}">Major</a>
+                                <c:if test="${sortBy == 'major'}">
+                                    <c:choose>
+                                        <c:when test="${order == 'asc'}"> ▲</c:when>
+                                        <c:otherwise> ▼</c:otherwise>
+                                    </c:choose>
+                                </c:if>
+                            </th>
+
                             <th>Actions</th>
                         </tr>
                     </thead>

@@ -47,6 +47,12 @@ public class StudentController extends HttpServlet {
             case "delete":
                 deleteStudent(request, response);
                 break;
+            case "sort":
+                sortStudents(request, response);
+                break;
+            case "filter":
+                filterStudents(request, response);
+                break;
             default:
                 listStudents(request, response);
                 break;
@@ -85,6 +91,53 @@ public class StudentController extends HttpServlet {
         }
 
         request.setAttribute("students", students);
+
+        RequestDispatcher dispatcher = request.getRequestDispatcher("/views/student-list.jsp");
+        dispatcher.forward(request, response);
+    }
+
+    // Sort students (controller)
+    private void sortStudents(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String sortBy = request.getParameter("sortBy");
+        String order = request.getParameter("order");
+        String major = request.getParameter("major");
+
+        List<Student> students;
+        if (major != null && !major.trim().isEmpty()) {
+            // if major provided, use combined filter+sort
+            students = studentDAO.getStudentsFiltered(major, sortBy, order);
+            request.setAttribute("selectedMajor", major);
+        } else {
+            students = studentDAO.getStudentsSorted(sortBy, order);
+        }
+
+        request.setAttribute("students", students);
+        request.setAttribute("sortBy", sortBy == null ? "id" : sortBy);
+        request.setAttribute("order", order == null ? "asc" : order.toLowerCase());
+
+        RequestDispatcher dispatcher = request.getRequestDispatcher("/views/student-list.jsp");
+        dispatcher.forward(request, response);
+    }
+
+    // Filter students by major (controller)
+    private void filterStudents(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String major = request.getParameter("major");
+        String sortBy = request.getParameter("sortBy");
+        String order = request.getParameter("order");
+
+        List<Student> students;
+        if (sortBy != null || order != null) {
+            students = studentDAO.getStudentsFiltered(major, sortBy, order);
+            request.setAttribute("sortBy", sortBy == null ? "id" : sortBy);
+            request.setAttribute("order", order == null ? "asc" : order.toLowerCase());
+        } else {
+            students = studentDAO.getStudentsByMajor(major);
+        }
+
+        request.setAttribute("students", students);
+        request.setAttribute("selectedMajor", major);
 
         RequestDispatcher dispatcher = request.getRequestDispatcher("/views/student-list.jsp");
         dispatcher.forward(request, response);

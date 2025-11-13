@@ -61,6 +61,134 @@ public class StudentDAO {
         
         return students;
     }
+
+    // Validate sortBy parameter against allowed columns
+    private String validateSortBy(String sortBy) {
+        if (sortBy == null) return COL_ID;
+        switch (sortBy) {
+            case "id":
+            case "student_code":
+            case "full_name":
+            case "email":
+            case "major":
+                return sortBy;
+            default:
+                return COL_ID;
+        }
+    }
+
+    // Validate order parameter
+    private String validateOrder(String order) {
+        if (order != null && "desc".equalsIgnoreCase(order)) {
+            return "DESC";
+        }
+        return "ASC";
+    }
+
+    // Get students sorted by column and order (validated)
+    public List<Student> getStudentsSorted(String sortBy, String order) {
+        List<Student> students = new ArrayList<>();
+
+        String col = validateSortBy(sortBy);
+        String ord = validateOrder(order);
+
+        String sql = "SELECT " + COL_ID + ", " + COL_STUDENT_CODE + ", " + COL_FULL_NAME + ", "
+                + COL_EMAIL + ", " + COL_MAJOR + ", " + COL_CREATED_AT + " FROM students ORDER BY " + col + " " + ord;
+
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                Student student = new Student();
+                student.setId(rs.getInt(COL_ID));
+                student.setStudentCode(rs.getString(COL_STUDENT_CODE));
+                student.setFullName(rs.getString(COL_FULL_NAME));
+                student.setEmail(rs.getString(COL_EMAIL));
+                student.setMajor(rs.getString(COL_MAJOR));
+                student.setCreatedAt(rs.getTimestamp(COL_CREATED_AT));
+                students.add(student);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return students;
+    }
+
+    // Get students filtered by major
+    public List<Student> getStudentsByMajor(String major) {
+        List<Student> students = new ArrayList<>();
+        if (major == null || major.trim().isEmpty()) {
+            return getAllStudents();
+        }
+
+        String sql = "SELECT " + COL_ID + ", " + COL_STUDENT_CODE + ", " + COL_FULL_NAME + ", "
+                + COL_EMAIL + ", " + COL_MAJOR + ", " + COL_CREATED_AT + " FROM students WHERE " + COL_MAJOR + " = ? ORDER BY " + COL_ID + " DESC";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, major);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Student student = new Student();
+                    student.setId(rs.getInt(COL_ID));
+                    student.setStudentCode(rs.getString(COL_STUDENT_CODE));
+                    student.setFullName(rs.getString(COL_FULL_NAME));
+                    student.setEmail(rs.getString(COL_EMAIL));
+                    student.setMajor(rs.getString(COL_MAJOR));
+                    student.setCreatedAt(rs.getTimestamp(COL_CREATED_AT));
+                    students.add(student);
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return students;
+    }
+
+    // Combined: filter by major (optional) and sort by column/order
+    public List<Student> getStudentsFiltered(String major, String sortBy, String order) {
+        List<Student> students = new ArrayList<>();
+
+        String col = validateSortBy(sortBy);
+        String ord = validateOrder(order);
+
+        // If major not provided, just use getStudentsSorted
+        if (major == null || major.trim().isEmpty()) {
+            return getStudentsSorted(col, ord);
+        }
+
+        String sql = "SELECT " + COL_ID + ", " + COL_STUDENT_CODE + ", " + COL_FULL_NAME + ", "
+                + COL_EMAIL + ", " + COL_MAJOR + ", " + COL_CREATED_AT + " FROM students WHERE " + COL_MAJOR + " = ? ORDER BY " + col + " " + ord;
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, major);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Student student = new Student();
+                    student.setId(rs.getInt(COL_ID));
+                    student.setStudentCode(rs.getString(COL_STUDENT_CODE));
+                    student.setFullName(rs.getString(COL_FULL_NAME));
+                    student.setEmail(rs.getString(COL_EMAIL));
+                    student.setMajor(rs.getString(COL_MAJOR));
+                    student.setCreatedAt(rs.getTimestamp(COL_CREATED_AT));
+                    students.add(student);
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return students;
+    }
     
     // Search students by keyword (student_code, full_name, email)
     public List<Student> searchStudents(String keyword) {
