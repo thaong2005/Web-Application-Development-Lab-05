@@ -146,6 +146,36 @@
             font-size: 64px;
             margin-bottom: 20px;
         }
+        .pagination {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .pagination a {
+            padding: 8px 12px;
+            margin: 0 4px;
+            border: 1px solid #ddd;
+            text-decoration: none;
+            color: #333;
+            border-radius: 4px;
+        }
+
+        .pagination strong {
+            padding: 8px 12px;
+            margin: 0 4px;
+            background-color: #4CAF50;
+            color: white;
+            border: 1px solid #4CAF50;
+            border-radius: 4px;
+        }
+
+        .pagination .disabled {
+            padding: 8px 12px;
+            margin: 0 4px;
+            color: #bbb;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -381,6 +411,120 @@
                 </div>
             </c:otherwise>
         </c:choose>
+            
+            <!-- Pagination controls -->
+            <c:if test="${not empty totalPages && totalPages > 1}">
+                <div class="pagination">
+                    <!-- Previous / First -->
+                    <c:choose>
+                        <c:when test="${currentPage > 1}">
+                            <c:url var="firstUrl" value="student">
+                                <c:param name="action" value="list" />
+                                <c:param name="page" value="1" />
+                                <c:if test="${not empty keyword}"><c:param name="keyword" value="${keyword}"/></c:if>
+                                <c:if test="${not empty selectedMajor}"><c:param name="major" value="${selectedMajor}"/></c:if>
+                                <c:if test="${not empty sortBy}"><c:param name="sortBy" value="${sortBy}"/></c:if>
+                                <c:if test="${not empty order}"><c:param name="order" value="${order}"/></c:if>
+                            </c:url>
+                            <a href="${firstUrl}">First</a>
+
+                            <c:url var="prevUrl" value="student">
+                                <c:param name="action" value="list" />
+                                <c:param name="page" value="${currentPage - 1}" />
+                                <c:if test="${not empty keyword}"><c:param name="keyword" value="${keyword}"/></c:if>
+                                <c:if test="${not empty selectedMajor}"><c:param name="major" value="${selectedMajor}"/></c:if>
+                                <c:if test="${not empty sortBy}"><c:param name="sortBy" value="${sortBy}"/></c:if>
+                                <c:if test="${not empty order}"><c:param name="order" value="${order}"/></c:if>
+                            </c:url>
+                            <a href="${prevUrl}">« Previous</a>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="disabled">First</span>
+                            <span class="disabled">« Previous</span>
+                        </c:otherwise>
+                    </c:choose>
+
+                    <!-- Page window: show up to 5 pages (current ±2) -->
+                    <c:set var="startPage" value="${currentPage - 2}" />
+                    <c:if test="${startPage < 1}"><c:set var="startPage" value="1"/></c:if>
+                    <c:set var="endPage" value="${currentPage + 2}" />
+                    <c:if test="${endPage > totalPages}"><c:set var="endPage" value="${totalPages}"/></c:if>
+                    <c:if test="${endPage - startPage < 4}">
+                        <c:set var="startPage" value="${endPage - 4}" />
+                        <c:if test="${startPage < 1}"><c:set var="startPage" value="1"/></c:if>
+                    </c:if>
+
+                    <c:if test="${startPage > 1}">
+                        <span>...</span>
+                    </c:if>
+
+                    <c:forEach begin="${startPage}" end="${endPage}" var="i">
+                        <c:choose>
+                            <c:when test="${i == currentPage}">
+                                <strong>${i}</strong>
+                            </c:when>
+                            <c:otherwise>
+                                <c:url var="pageUrl" value="student">
+                                    <c:param name="action" value="list" />
+                                    <c:param name="page" value="${i}" />
+                                    <c:if test="${not empty keyword}"><c:param name="keyword" value="${keyword}"/></c:if>
+                                    <c:if test="${not empty selectedMajor}"><c:param name="major" value="${selectedMajor}"/></c:if>
+                                    <c:if test="${not empty sortBy}"><c:param name="sortBy" value="${sortBy}"/></c:if>
+                                    <c:if test="${not empty order}"><c:param name="order" value="${order}"/></c:if>
+                                </c:url>
+                                <a href="${pageUrl}">${i}</a>
+                            </c:otherwise>
+                        </c:choose>
+                    </c:forEach>
+
+                    <c:if test="${endPage < totalPages}">
+                        <span>...</span>
+                    </c:if>
+
+                    <!-- Next / Last -->
+                    <c:choose>
+                        <c:when test="${currentPage < totalPages}">
+                            <c:url var="nextUrl" value="student">
+                                <c:param name="action" value="list" />
+                                <c:param name="page" value="${currentPage + 1}" />
+                                <c:if test="${not empty keyword}"><c:param name="keyword" value="${keyword}"/></c:if>
+                                <c:if test="${not empty selectedMajor}"><c:param name="major" value="${selectedMajor}"/></c:if>
+                                <c:if test="${not empty sortBy}"><c:param name="sortBy" value="${sortBy}"/></c:if>
+                                <c:if test="${not empty order}"><c:param name="order" value="${order}"/></c:if>
+                            </c:url>
+                            <a href="${nextUrl}">Next »</a>
+
+                            <c:url var="lastUrl" value="student">
+                                <c:param name="action" value="list" />
+                                <c:param name="page" value="${totalPages}" />
+                                <c:if test="${not empty keyword}"><c:param name="keyword" value="${keyword}"/></c:if>
+                                <c:if test="${not empty selectedMajor}"><c:param name="major" value="${selectedMajor}"/></c:if>
+                                <c:if test="${not empty sortBy}"><c:param name="sortBy" value="${sortBy}"/></c:if>
+                                <c:if test="${not empty order}"><c:param name="order" value="${order}"/></c:if>
+                            </c:url>
+                            <a href="${lastUrl}">Last</a>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="disabled">Next »</span>
+                            <span class="disabled">Last</span>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+
+                <!-- Record range display -->
+                <c:set var="startRecord" value="${(currentPage - 1) * recordsPerPage + 1}" />
+                <c:set var="endRecordCandidate" value="${currentPage * recordsPerPage}" />
+                <c:choose>
+                    <c:when test="${endRecordCandidate > totalRecords}">
+                        <c:set var="endRecord" value="${totalRecords}" />
+                    </c:when>
+                    <c:otherwise>
+                        <c:set var="endRecord" value="${endRecordCandidate}" />
+                    </c:otherwise>
+                </c:choose>
+
+                <p style="text-align:center; margin-top:8px;">Showing ${startRecord} - ${endRecord} of ${totalRecords} records (page ${currentPage} of ${totalPages})</p>
+            </c:if>
     </div>
 </body>
 </html>

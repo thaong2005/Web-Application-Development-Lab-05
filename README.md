@@ -336,5 +336,49 @@ private void sortStudents(HttpServletRequest req, HttpServletResponse resp) {
 # Output: ![Sort results: ](./output/EX7/sort.png)
 
 =================================================================================
-## EXERCISE 8: PAGINATION 
+## EXERCISE 8: PAGINATION (ngắn gọn)
 
+- DAO (`StudentDAO.java`): thêm các phương thức count/paginate cho các kịch bản (toàn bộ, theo keyword, theo major, kết hợp keyword+major).
+- Controller (`StudentController.java`): `listStudents(...)` xử lý `page`, tính `offset = (currentPage-1)*recordsPerPage`, gọi DAO tương ứng và set các attribute `students`, `currentPage`, `totalPages`, `totalRecords`.
+- View (`student-list.jsp`): thêm controls phân trang (First / Prev / pages / Next / Last), hiển thị phạm vi bản ghi và giữ nguyên các param hiện tại (keyword/major/sort).
+
+
+(1) Controller (offset + pagination):
+```java
+int recordsPerPage = 10;
+String pageParam = request.getParameter("page");
+int currentPage = 1;
+try { if (pageParam != null) currentPage = Integer.parseInt(pageParam); } catch (NumberFormatException e) { currentPage = 1; }
+int offset = (currentPage - 1) * recordsPerPage;
+
+int totalRecords = studentDAO.getTotalStudents();
+int totalPages = (int)Math.ceil((double) totalRecords / recordsPerPage);
+List<Student> students = studentDAO.getStudentsPaginated(offset, recordsPerPage);
+
+request.setAttribute("students", students);
+request.setAttribute("currentPage", currentPage);
+request.setAttribute("totalPages", totalPages);
+request.setAttribute("totalRecords", totalRecords);
+```
+
+(2) DAO (paginated):
+```java
+String sql = "SELECT id, student_code, full_name, email, major, created_at FROM students ORDER BY id DESC LIMIT ? OFFSET ?";
+PreparedStatement pstmt = conn.prepareStatement(sql);
+pstmt.setInt(1, limit);
+pstmt.setInt(2, offset);
+// execute and map
+```
+
+(3) JSP (pagination link):
+```jsp
+<c:url var="pageUrl" value="student">
+    <c:param name="action" value="list" />
+    <c:param name="page" value="${i}" />
+    <c:if test="${not empty keyword}"><c:param name="keyword" value="${keyword}"/></c:if>
+    <c:if test="${not empty selectedMajor}"><c:param name="major" value="${selectedMajor}"/></c:if>
+</c:url>
+<a href="${pageUrl}">${i}</a>
+```
+
+Output: ![Pagination results: ](./output/EX8/paginate.png)

@@ -229,6 +229,293 @@ public class StudentDAO {
 
         return students;
     }
+
+    // Get total number of students
+    public int getTotalStudents() {
+        String sql = "SELECT COUNT(*) AS cnt FROM students";
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            if (rs.next()) {
+                return rs.getInt("cnt");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    // Get students with pagination (limit, offset)
+    public List<Student> getStudentsPaginated(int offset, int limit) {
+        List<Student> students = new ArrayList<>();
+        String sql = "SELECT " + COL_ID + ", " + COL_STUDENT_CODE + ", " + COL_FULL_NAME + ", "
+                + COL_EMAIL + ", " + COL_MAJOR + ", " + COL_CREATED_AT + " FROM students ORDER BY " + COL_ID + " DESC LIMIT ? OFFSET ?";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, limit);
+            pstmt.setInt(2, offset);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Student student = new Student();
+                    student.setId(rs.getInt(COL_ID));
+                    student.setStudentCode(rs.getString(COL_STUDENT_CODE));
+                    student.setFullName(rs.getString(COL_FULL_NAME));
+                    student.setEmail(rs.getString(COL_EMAIL));
+                    student.setMajor(rs.getString(COL_MAJOR));
+                    student.setCreatedAt(rs.getTimestamp(COL_CREATED_AT));
+                    students.add(student);
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return students;
+    }
+
+    // --- Pagination helpers for search and filter combinations ---
+
+    // Get total count for a keyword search (across code, name, email)
+    public int getTotalStudentsByKeyword(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) return getTotalStudents();
+        String sql = "SELECT COUNT(*) AS cnt FROM students WHERE " + COL_STUDENT_CODE + " LIKE ? OR " + COL_FULL_NAME + " LIKE ? OR " + COL_EMAIL + " LIKE ?";
+        String p = "%" + keyword + "%";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, p);
+            pstmt.setString(2, p);
+            pstmt.setString(3, p);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) return rs.getInt("cnt");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    // Get paginated results for keyword search
+    public List<Student> getStudentsPaginatedByKeyword(String keyword, int offset, int limit) {
+        if (keyword == null || keyword.trim().isEmpty()) return getStudentsPaginated(offset, limit);
+        List<Student> students = new ArrayList<>();
+        String sql = "SELECT " + COL_ID + ", " + COL_STUDENT_CODE + ", " + COL_FULL_NAME + ", "
+                + COL_EMAIL + ", " + COL_MAJOR + ", " + COL_CREATED_AT + " FROM students WHERE (" + COL_STUDENT_CODE + " LIKE ? OR " + COL_FULL_NAME + " LIKE ? OR " + COL_EMAIL + " LIKE ?) ORDER BY " + COL_ID + " DESC LIMIT ? OFFSET ?";
+        String p = "%" + keyword + "%";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, p);
+            pstmt.setString(2, p);
+            pstmt.setString(3, p);
+            pstmt.setInt(4, limit);
+            pstmt.setInt(5, offset);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Student student = new Student();
+                    student.setId(rs.getInt(COL_ID));
+                    student.setStudentCode(rs.getString(COL_STUDENT_CODE));
+                    student.setFullName(rs.getString(COL_FULL_NAME));
+                    student.setEmail(rs.getString(COL_EMAIL));
+                    student.setMajor(rs.getString(COL_MAJOR));
+                    student.setCreatedAt(rs.getTimestamp(COL_CREATED_AT));
+                    students.add(student);
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return students;
+    }
+
+    // Get total count for students by major (optionally used with sort)
+    public int getTotalStudentsByMajor(String major) {
+        if (major == null || major.trim().isEmpty()) return getTotalStudents();
+        String sql = "SELECT COUNT(*) AS cnt FROM students WHERE " + COL_MAJOR + " = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, major);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) return rs.getInt("cnt");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    // Get paginated results for a major with optional sort
+    public List<Student> getStudentsFilteredPaginated(String major, String sortBy, String order, int offset, int limit) {
+        List<Student> students = new ArrayList<>();
+        String col = validateSortBy(sortBy);
+        String ord = validateOrder(order);
+
+        // If no major provided, fallback to sorted paginated
+        if (major == null || major.trim().isEmpty()) {
+            // Use a simple paginated sorted query
+            String sql = "SELECT " + COL_ID + ", " + COL_STUDENT_CODE + ", " + COL_FULL_NAME + ", "
+                    + COL_EMAIL + ", " + COL_MAJOR + ", " + COL_CREATED_AT + " FROM students ORDER BY " + col + " " + ord + " LIMIT ? OFFSET ?";
+
+            try (Connection conn = getConnection();
+                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+                pstmt.setInt(1, limit);
+                pstmt.setInt(2, offset);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        Student student = new Student();
+                        student.setId(rs.getInt(COL_ID));
+                        student.setStudentCode(rs.getString(COL_STUDENT_CODE));
+                        student.setFullName(rs.getString(COL_FULL_NAME));
+                        student.setEmail(rs.getString(COL_EMAIL));
+                        student.setMajor(rs.getString(COL_MAJOR));
+                        student.setCreatedAt(rs.getTimestamp(COL_CREATED_AT));
+                        students.add(student);
+                    }
+                }
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            return students;
+        }
+
+        String sql = "SELECT " + COL_ID + ", " + COL_STUDENT_CODE + ", " + COL_FULL_NAME + ", "
+                + COL_EMAIL + ", " + COL_MAJOR + ", " + COL_CREATED_AT + " FROM students WHERE " + COL_MAJOR + " = ? ORDER BY " + col + " " + ord + " LIMIT ? OFFSET ?";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, major);
+            pstmt.setInt(2, limit);
+            pstmt.setInt(3, offset);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Student student = new Student();
+                    student.setId(rs.getInt(COL_ID));
+                    student.setStudentCode(rs.getString(COL_STUDENT_CODE));
+                    student.setFullName(rs.getString(COL_FULL_NAME));
+                    student.setEmail(rs.getString(COL_EMAIL));
+                    student.setMajor(rs.getString(COL_MAJOR));
+                    student.setCreatedAt(rs.getTimestamp(COL_CREATED_AT));
+                    students.add(student);
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return students;
+    }
+
+    // Get total count for filtered by major (used with filtered pagination)
+    public int getTotalStudentsFiltered(String major) {
+        return getTotalStudentsByMajor(major);
+    }
+
+    // Get total count for keyword + major combined
+    public int getTotalStudentsByKeywordAndMajor(String keyword, String major) {
+        if ((keyword == null || keyword.trim().isEmpty()) && (major == null || major.trim().isEmpty())) return getTotalStudents();
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) AS cnt FROM students WHERE ");
+        List<Object> params = new ArrayList<>();
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("(" + COL_STUDENT_CODE + " LIKE ? OR " + COL_FULL_NAME + " LIKE ? OR " + COL_EMAIL + " LIKE ?)");
+            String p = "%" + keyword + "%";
+            params.add(p); params.add(p); params.add(p);
+        }
+
+        if (major != null && !major.trim().isEmpty()) {
+            if (!params.isEmpty()) sql.append(" AND ");
+            sql.append(COL_MAJOR + " = ?");
+            params.add(major);
+        }
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < params.size(); i++) {
+                Object p = params.get(i);
+                pstmt.setObject(i + 1, p);
+            }
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) return rs.getInt("cnt");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    // Paginated results for keyword + major combined
+    public List<Student> getStudentsPaginatedByKeywordAndMajor(String keyword, String major, int offset, int limit) {
+        List<Student> students = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT " + COL_ID + ", " + COL_STUDENT_CODE + ", " + COL_FULL_NAME + ", " + COL_EMAIL + ", " + COL_MAJOR + ", " + COL_CREATED_AT + " FROM students WHERE ");
+        List<Object> params = new ArrayList<>();
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("(" + COL_STUDENT_CODE + " LIKE ? OR " + COL_FULL_NAME + " LIKE ? OR " + COL_EMAIL + " LIKE ?)");
+            String p = "%" + keyword + "%";
+            params.add(p); params.add(p); params.add(p);
+        }
+
+        if (major != null && !major.trim().isEmpty()) {
+            if (!params.isEmpty()) sql.append(" AND ");
+            sql.append(COL_MAJOR + " = ?");
+            params.add(major);
+        }
+
+        sql.append(" ORDER BY " + COL_ID + " DESC LIMIT ? OFFSET ?");
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+
+            int idx = 1;
+            for (Object p : params) {
+                pstmt.setObject(idx++, p);
+            }
+            pstmt.setInt(idx++, limit);
+            pstmt.setInt(idx++, offset);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Student student = new Student();
+                    student.setId(rs.getInt(COL_ID));
+                    student.setStudentCode(rs.getString(COL_STUDENT_CODE));
+                    student.setFullName(rs.getString(COL_FULL_NAME));
+                    student.setEmail(rs.getString(COL_EMAIL));
+                    student.setMajor(rs.getString(COL_MAJOR));
+                    student.setCreatedAt(rs.getTimestamp(COL_CREATED_AT));
+                    students.add(student);
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return students;
+    }
     
     // Get student by ID
     public Student getStudentById(int id) {

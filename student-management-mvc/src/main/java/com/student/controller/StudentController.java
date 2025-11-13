@@ -78,19 +78,96 @@ public class StudentController extends HttpServlet {
     // List all students
     private void listStudents(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        // Check for optional search keyword
+        // Parameters that can affect listing
         String keyword = request.getParameter("keyword");
-        List<Student> students;
+        String major = request.getParameter("major");
+        String sortBy = request.getParameter("sortBy");
+        String order = request.getParameter("order");
 
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            students = studentDAO.searchStudents(keyword.trim());
-            // keep keyword so JSP can show it in the search box
-            request.setAttribute("keyword", keyword.trim());
-        } else {
-            students = studentDAO.getAllStudents();
+        // Pagination parameters (page)
+        String pageParam = request.getParameter("page");
+        int currentPage = 1;
+        try {
+            if (pageParam != null) currentPage = Integer.parseInt(pageParam);
+        } catch (NumberFormatException ex) {
+            currentPage = 1;
         }
+        if (currentPage < 1) currentPage = 1;
 
-        request.setAttribute("students", students);
+        int recordsPerPage = 10;
+
+        List<Student> students;
+        int totalRecords = 0;
+
+        // Prioritize: keyword search (optionally combined with major), else filter by major (with optional sort), else default listing
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            keyword = keyword.trim();
+            request.setAttribute("keyword", keyword);
+
+            if (major != null && !major.trim().isEmpty()) {
+                // keyword + major
+                totalRecords = studentDAO.getTotalStudentsByKeywordAndMajor(keyword, major);
+                int totalPages = (int) Math.ceil((double) totalRecords / recordsPerPage);
+                if (totalPages < 1) totalPages = 1;
+                if (currentPage > totalPages) currentPage = totalPages;
+                int offset = (currentPage - 1) * recordsPerPage;
+                students = studentDAO.getStudentsPaginatedByKeywordAndMajor(keyword, major, offset, recordsPerPage);
+
+                request.setAttribute("selectedMajor", major);
+                request.setAttribute("students", students);
+                request.setAttribute("currentPage", currentPage);
+                request.setAttribute("totalPages", totalPages);
+                request.setAttribute("totalRecords", totalRecords);
+                request.setAttribute("recordsPerPage", recordsPerPage);
+            } else {
+                // only keyword search
+                totalRecords = studentDAO.getTotalStudentsByKeyword(keyword);
+                int totalPages = (int) Math.ceil((double) totalRecords / recordsPerPage);
+                if (totalPages < 1) totalPages = 1;
+                if (currentPage > totalPages) currentPage = totalPages;
+                int offset = (currentPage - 1) * recordsPerPage;
+                students = studentDAO.getStudentsPaginatedByKeyword(keyword, offset, recordsPerPage);
+
+                request.setAttribute("students", students);
+                request.setAttribute("currentPage", currentPage);
+                request.setAttribute("totalPages", totalPages);
+                request.setAttribute("totalRecords", totalRecords);
+                request.setAttribute("recordsPerPage", recordsPerPage);
+            }
+        } else if (major != null && !major.trim().isEmpty()) {
+            // Filter by major (with optional sort)
+            totalRecords = studentDAO.getTotalStudentsByMajor(major);
+            int totalPages = (int) Math.ceil((double) totalRecords / recordsPerPage);
+            if (totalPages < 1) totalPages = 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            int offset = (currentPage - 1) * recordsPerPage;
+
+            students = studentDAO.getStudentsFilteredPaginated(major, sortBy, order, offset, recordsPerPage);
+
+            request.setAttribute("selectedMajor", major);
+            request.setAttribute("students", students);
+            request.setAttribute("currentPage", currentPage);
+            request.setAttribute("totalPages", totalPages);
+            request.setAttribute("totalRecords", totalRecords);
+            request.setAttribute("recordsPerPage", recordsPerPage);
+            request.setAttribute("sortBy", sortBy == null ? "id" : sortBy);
+            request.setAttribute("order", order == null ? "asc" : order.toLowerCase());
+        } else {
+            // Default paginated listing (no keyword, no major)
+            totalRecords = studentDAO.getTotalStudents();
+            int totalPages = (int) Math.ceil((double) totalRecords / recordsPerPage);
+            if (totalPages < 1) totalPages = 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            int offset = (currentPage - 1) * recordsPerPage;
+
+            students = studentDAO.getStudentsPaginated(offset, recordsPerPage);
+
+            request.setAttribute("students", students);
+            request.setAttribute("currentPage", currentPage);
+            request.setAttribute("totalPages", totalPages);
+            request.setAttribute("totalRecords", totalRecords);
+            request.setAttribute("recordsPerPage", recordsPerPage);
+        }
 
         RequestDispatcher dispatcher = request.getRequestDispatcher("/views/student-list.jsp");
         dispatcher.forward(request, response);
