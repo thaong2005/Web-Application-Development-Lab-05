@@ -338,10 +338,11 @@ private void sortStudents(HttpServletRequest req, HttpServletResponse resp) {
 =================================================================================
 ## EXERCISE 8: PAGINATION (ngắn gọn)
 
-- DAO (`StudentDAO.java`): thêm các phương thức count/paginate cho các kịch bản (toàn bộ, theo keyword, theo major, kết hợp keyword+major).
-- Controller (`StudentController.java`): `listStudents(...)` xử lý `page`, tính `offset = (currentPage-1)*recordsPerPage`, gọi DAO tương ứng và set các attribute `students`, `currentPage`, `totalPages`, `totalRecords`.
-- View (`student-list.jsp`): thêm controls phân trang (First / Prev / pages / Next / Last), hiển thị phạm vi bản ghi và giữ nguyên các param hiện tại (keyword/major/sort).
+- DAO (`StudentDAO.java`): add count/paginate methods for scenarios (all, by keyword, by major, keyword+major combination).
 
+- Controller (`StudentController.java`): `listStudents(...)` handles `page`, calculates `offset = (currentPage-1)*recordsPerPage`, calls corresponding DAO and sets attributes `students`, `currentPage`, `totalPages`, `totalRecords`.
+
+- View (`student-list.jsp`): add pagination controls (First / Prev / pages / Next / Last), display record range and keep current parameters (keyword/major/sort).
 
 (1) Controller (offset + pagination):
 ```java
